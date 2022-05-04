@@ -1,5 +1,6 @@
 const t = require('tap')
 const { resolve, dirname, join } = require('path')
+const Arborist = require('@npmcli/arborist')
 
 const { load: loadMockNpm } = require('../fixtures/mock-npm.js')
 const mockGlobals = require('../fixtures/mock-globals')
@@ -653,4 +654,143 @@ t.test('implicit workspace accept', async t => {
     }),
   })
   await t.rejects(mock.npm.exec('org', []), /.*Usage/)
+})
+
+t.test('replaceRegistryHost', async t => {
+  const mock = await loadMockNpm(t, {
+    prefixDir: {
+      packages: {
+        a: {
+          'package.json': JSON.stringify({
+            name: 'a',
+            version: '1.0.0',
+            scripts: { test: 'echo test a' },
+          }),
+        },
+      },
+      'package.json': JSON.stringify({
+        name: 'root',
+        version: '1.0.0',
+        workspaces: ['./packages/a'],
+      }),
+    },
+    globals: {
+      'process.argv': [
+        process.execPath,
+        process.argv[1],
+        '--color', 'false',
+        '--workspace', './packages/a',
+      ],
+    },
+  })
+  t.equal(mock.npm.flatOptions.replaceRegistryHost, 'npmjs')
+  const arb = new Arborist({
+    ...mock.npm.flatOptions,
+  })
+  t.equal(arb.options.replaceRegistryHost, 'npmjs')
+})
+
+t.test('replaceRegistryHost=garbage', async t => {
+  const mock = await loadMockNpm(t, {
+    prefixDir: {
+      packages: {
+        a: {
+          'package.json': JSON.stringify({
+            name: 'a',
+            version: '1.0.0',
+            scripts: { test: 'echo test a' },
+          }),
+        },
+      },
+      'package.json': JSON.stringify({
+        name: 'root',
+        version: '1.0.0',
+        workspaces: ['./packages/a'],
+      }),
+    },
+    globals: {
+      'process.argv': [
+        process.execPath,
+        process.argv[1],
+        '--color', 'false',
+        '--workspace', './packages/a',
+        '--replace-registry-host', 'garbage',
+      ],
+    },
+  })
+  t.equal(mock.npm.flatOptions.replaceRegistryHost, 'npmjs')
+  const arb = new Arborist({
+    ...mock.npm.flatOptions,
+  })
+  t.equal(arb.options.replaceRegistryHost, 'npmjs')
+})
+
+t.test('replaceRegistryHost=never', async t => {
+  const mock = await loadMockNpm(t, {
+    prefixDir: {
+      packages: {
+        a: {
+          'package.json': JSON.stringify({
+            name: 'a',
+            version: '1.0.0',
+            scripts: { test: 'echo test a' },
+          }),
+        },
+      },
+      'package.json': JSON.stringify({
+        name: 'root',
+        version: '1.0.0',
+        workspaces: ['./packages/a'],
+      }),
+    },
+    globals: {
+      'process.argv': [
+        process.execPath,
+        process.argv[1],
+        '--color', 'false',
+        '--workspace', './packages/a',
+        '--replace-registry-host', 'never',
+      ],
+    },
+  })
+  t.equal(mock.npm.flatOptions.replaceRegistryHost, 'never')
+  const arb = new Arborist({
+    ...mock.npm.flatOptions,
+  })
+  t.equal(arb.options.replaceRegistryHost, 'never')
+})
+
+t.test('replaceRegistryHost=always', async t => {
+  const mock = await loadMockNpm(t, {
+    prefixDir: {
+      packages: {
+        a: {
+          'package.json': JSON.stringify({
+            name: 'a',
+            version: '1.0.0',
+            scripts: { test: 'echo test a' },
+          }),
+        },
+      },
+      'package.json': JSON.stringify({
+        name: 'root',
+        version: '1.0.0',
+        workspaces: ['./packages/a'],
+      }),
+    },
+    globals: {
+      'process.argv': [
+        process.execPath,
+        process.argv[1],
+        '--color', 'false',
+        '--workspace', './packages/a',
+        '--replace-registry-host', 'always',
+      ],
+    },
+  })
+  t.equal(mock.npm.flatOptions.replaceRegistryHost, 'always')
+  const arb = new Arborist({
+    ...mock.npm.flatOptions,
+  })
+  t.equal(arb.options.replaceRegistryHost, 'always')
 })
